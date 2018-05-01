@@ -16,4 +16,5 @@ Node reads Outlook's meeting files -> Node consults a json it writes to about wh
 2. Setup a developer project on google that uses calendar api
 3. `node setupAPI.js` (this is the stock google calendar API setup), this will set it up with your google account
 4. As it instructs, put client secret info in a file called client_secret.json, then put it in ./files folder
-5. Setup a cron job to run this (example included)
+5. Change your user folder in outlook.js
+6. Setup a cron job to run this (example included)
