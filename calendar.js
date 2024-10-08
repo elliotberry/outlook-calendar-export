@@ -1,25 +1,25 @@
-const fs = require('fs');
-var readline = require('readline');
-var google = require('googleapis');
-var googleAuth = require('google-auth-library');
-var colors = require('colors');
-const notifier = require('node-notifier');
+import fs from 'fs';
+import readline from 'readline';
+import google from 'googleapis';
+import googleAuth from 'google-auth-library';
 
-var queuedEvents = [];
+import notifier from 'node-notifier';
 
-module.exports = function(events) {
+const queuedEvents = [];
+
+export default events => {
 
     // If modifying these scopes, delete your previously saved credentials
     // at ~/.credentials/calendar-nodejs-quickstart.json
-    var SCOPES = ['https://www.googleapis.com/auth/calendar'];
-    var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
-        process.env.USERPROFILE) + '/.credentials/';
-    var TOKEN_PATH = TOKEN_DIR + 'calendar-nodejs-quickstart.json';
+    const SCOPES = ['https://www.googleapis.com/auth/calendar'];
+    const TOKEN_DIR = `${process.env.HOME || process.env.HOMEPATH ||
+    process.env.USERPROFILE}/.credentials/`;
+    const TOKEN_PATH = `${TOKEN_DIR}calendar-nodejs-quickstart.json`;
 
     // Load client secrets from a local file.
     fs.readFile('./files/client_secret.json', function processClientSecrets(err, content) {
         if (err) {
-            console.log('Error loading client secret file: ' + err);
+            console.log(`Error loading client secret file: ${err}`);
             return;
         }
         // Authorize a client with the loaded credentials, then call the
@@ -34,15 +34,15 @@ module.exports = function(events) {
      * @param {Object} credentials The authorization client credentials.
      * @param {function} callback The callback to call with the authorized client.
      */
-    function authorize(credentials, callback) {
-        var clientSecret = credentials.installed.client_secret;
-        var clientId = credentials.installed.client_id;
-        var redirectUrl = credentials.installed.redirect_uris[0];
-        var auth = new googleAuth();
-        var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+    function authorize({installed}, callback) {
+        const clientSecret = installed.client_secret;
+        const clientId = installed.client_id;
+        const redirectUrl = installed.redirect_uris[0];
+        const auth = new googleAuth();
+        const oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
         // Check if we have previously stored a token.
-        fs.readFile(TOKEN_PATH, function(err, token) {
+        fs.readFile(TOKEN_PATH, (err, token) => {
             if (err) {
                 getNewToken(oauth2Client, callback);
             } else {
@@ -61,18 +61,18 @@ module.exports = function(events) {
      *     client.
      */
     function getNewToken(oauth2Client, callback) {
-        var authUrl = oauth2Client.generateAuthUrl({
+        const authUrl = oauth2Client.generateAuthUrl({
             access_type: 'offline',
             scope: SCOPES
         });
         console.log('Authorize this app by visiting this url: ', authUrl);
-        var rl = readline.createInterface({
+        const rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout
         });
-        rl.question('Enter the code from that page here: ', function(code) {
+        rl.question('Enter the code from that page here: ', code => {
             rl.close();
-            oauth2Client.getToken(code, function(err, token) {
+            oauth2Client.getToken(code, (err, token) => {
                 if (err) {
                     console.log('Error while trying to retrieve access token', err);
                     return;
@@ -98,22 +98,22 @@ module.exports = function(events) {
             }
         }
         fs.writeFile(TOKEN_PATH, JSON.stringify(token));
-        console.log('Token stored to ' + TOKEN_PATH);
+        console.log(`Token stored to ${TOKEN_PATH}`);
     }
 
     function ISODateString(d) {
         function pad(n) {
-            return n < 10 ? '0' + n : n
+            return n < 10 ? `0${n}` : n;
         }
-        return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + 'Z'
+        return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}Z`;
     }
 
     function makeGoogleObject(obj) {
-        var startDate = new Date(obj.com_microsoft_outlook_startDate);
-        var endDate = new Date(obj.com_microsoft_outlook_endDate);
-        var now = new Date();
+        const startDate = new Date(obj.com_microsoft_outlook_startDate);
+        const endDate = new Date(obj.com_microsoft_outlook_endDate);
+        const now = new Date();
         if (now < startDate) {
-            var sampleObject = {
+            const sampleObject = {
                 'summary': obj.ItemTitle,
                 'location': obj.ItemCoverage,
                 'start': {
@@ -145,7 +145,7 @@ module.exports = function(events) {
     function addTheEvents(auth) {
         for (u = 0; u < events.length; u++) {
             if (events[u] !== undefined) {
-                var event = makeGoogleObject(events[u]);
+                const event = makeGoogleObject(events[u]);
                 if (event !== false) {
                     queuedEvents.push(event);
                 }
@@ -155,8 +155,8 @@ module.exports = function(events) {
     };
 
     function addTheQueuedEvents(auth) {
-        var x = 0;
-        var interval = setInterval(function() {
+        let x = 0;
+        const interval = setInterval(() => {
             console.log("this is the number of the event we're on");
             console.log(x);
             if (x < queuedEvents.length) {
@@ -166,7 +166,7 @@ module.exports = function(events) {
                 clearInterval(interval);
                 notifier.notify({
                     'title': 'Calendar Updated Lol',
-                    'message': queuedEvents.length + ' events updated'
+                    'message': `${queuedEvents.length} events updated`
                 });
             }
 
@@ -174,21 +174,21 @@ module.exports = function(events) {
     }
 
     function addOneEvent(obj, auth) {
-        var calendar = google.calendar('v3');
+        const calendar = google.calendar('v3');
 
         calendar.events.insert({
-            auth: auth,
+            auth,
             calendarId: 'mcsnfmbvhta0qddmn0f6df84g8@group.calendar.google.com',
             resource: obj,
-        }, function(err, event) {
+        }, (err, {htmlLink}) => {
             if (err) {
                 console.log(obj);
-                console.log('There was an error contacting the Calendar service: ' + err);
+                console.log(`There was an error contacting the Calendar service: ${err}`);
                 return;
             }
-            console.log('Event created: %s', event.htmlLink);
+            console.log('Event created: %s', htmlLink);
         });
     }
 
 
-}
+};

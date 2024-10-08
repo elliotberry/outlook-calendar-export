@@ -1,20 +1,20 @@
 
-var fs = require('fs');
-var readline = require('readline');
-var google = require('googleapis');
-var googleAuth = require('google-auth-library');
+import fs from 'fs';
+import readline from 'readline';
+import google from 'googleapis';
+import googleAuth from 'google-auth-library';
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/calendar-nodejs-quickstart.json
-var SCOPES = ['https://www.googleapis.com/auth/calendar'];
-var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
-    process.env.USERPROFILE) + '/.credentials/';
-var TOKEN_PATH = TOKEN_DIR + 'calendar-nodejs-quickstart.json';
+const SCOPES = ['https://www.googleapis.com/auth/calendar'];
+const TOKEN_DIR = `${process.env.HOME || process.env.HOMEPATH ||
+    process.env.USERPROFILE}/.credentials/`;
+const TOKEN_PATH = `${TOKEN_DIR}calendar-nodejs-quickstart.json`;
 
 // Load client secrets from a local file.
 fs.readFile('./files/client_secret.json', function processClientSecrets(err, content) {
   if (err) {
-    console.log('Error loading client secret file: ' + err);
+    console.log(`Error loading client secret file: ${err}`);
     return;
   }
   // Authorize a client with the loaded credentials, then call the
@@ -29,15 +29,15 @@ fs.readFile('./files/client_secret.json', function processClientSecrets(err, con
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-function authorize(credentials, callback) {
-  var clientSecret = credentials.installed.client_secret;
-  var clientId = credentials.installed.client_id;
-  var redirectUrl = credentials.installed.redirect_uris[0];
-  var auth = new googleAuth();
-  var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+function authorize({installed}, callback) {
+  const clientSecret = installed.client_secret;
+  const clientId = installed.client_id;
+  const redirectUrl = installed.redirect_uris[0];
+  const auth = new googleAuth();
+  const oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
   // Check if we have previously stored a token.
-  fs.readFile(TOKEN_PATH, function(err, token) {
+  fs.readFile(TOKEN_PATH, (err, token) => {
     if (err) {
       getNewToken(oauth2Client, callback);
     } else {
@@ -48,7 +48,7 @@ function authorize(credentials, callback) {
 }
 
 
-var event = {
+const event = {
   'summary': 'Google I/O 2015',
   'location': '800 Howard St., San Francisco, CA 94103',
   'description': 'A chance to hear more about Google\'s developer products.',
@@ -87,18 +87,18 @@ var event = {
  *     client.
  */
 function getNewToken(oauth2Client, callback) {
-  var authUrl = oauth2Client.generateAuthUrl({
+  const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES
   });
   console.log('Authorize this app by visiting this url: ', authUrl);
-  var rl = readline.createInterface({
+  const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
   });
-  rl.question('Enter the code from that page here: ', function(code) {
+  rl.question('Enter the code from that page here: ', code => {
     rl.close();
-    oauth2Client.getToken(code, function(err, token) {
+    oauth2Client.getToken(code, (err, token) => {
       if (err) {
         console.log('Error while trying to retrieve access token', err);
         return;
@@ -124,7 +124,7 @@ function storeToken(token) {
     }
   }
   fs.writeFile(TOKEN_PATH, JSON.stringify(token));
-  console.log('Token stored to ' + TOKEN_PATH);
+  console.log(`Token stored to ${TOKEN_PATH}`);
 }
 
 /**
@@ -133,27 +133,27 @@ function storeToken(token) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 function listEvents(auth) {
-  var calendar = google.calendar('v3');
+  const calendar = google.calendar('v3');
   calendar.events.list({
-    auth: auth,
+    auth,
     calendarId: 'primary',
     timeMin: (new Date()).toISOString(),
     maxResults: 10,
     singleEvents: true,
     orderBy: 'startTime'
-  }, function(err, response) {
+  }, (err, {items}) => {
     if (err) {
-      console.log('The API returned an error: ' + err);
+      console.log(`The API returned an error: ${err}`);
       return;
     }
-    var events = response.items;
+    const events = items;
     if (events.length == 0) {
       console.log('No upcoming events found.');
     } else {
       console.log('Upcoming 10 events:');
-      for (var i = 0; i < events.length; i++) {
-        var event = events[i];
-        var start = event.start.dateTime || event.start.date;
+      for (let i = 0; i < events.length; i++) {
+        const event = events[i];
+        const start = event.start.dateTime || event.start.date;
         console.log('%s - %s', start, event.summary);
       }
     }
@@ -161,16 +161,16 @@ function listEvents(auth) {
 }
 
 function addEvent(auth) {
-	var calendar = google.calendar('v3');
+	const calendar = google.calendar('v3');
 	calendar.events.insert({
-  auth: auth,
+  auth,
   calendarId: 'primary',
   resource: event,
-}, function(err, event) {
+}, (err, {htmlLink}) => {
   if (err) {
-    console.log('There was an error contacting the Calendar service: ' + err);
+    console.log(`There was an error contacting the Calendar service: ${err}`);
     return;
   }
-  console.log('Event created: %s', event.htmlLink);
+  console.log('Event created: %s', htmlLink);
 });
 }
